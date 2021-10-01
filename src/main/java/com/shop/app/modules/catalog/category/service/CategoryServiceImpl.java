@@ -58,20 +58,31 @@ public class CategoryServiceImpl implements CategoryService {
         List<Category> listCategoty = categoryRepository.findAll();
         List<CategoryDto> listCategoryDto = new ArrayList<>();
         listCategoty.forEach(category -> {
-            listCategoryDto.add(new CategoryDto(category));
+            listCategoryDto.add(new CategoryDto().loadFromEntity(category));
         });
         return listCategoryDto;
     }
 
-   
     @Override
     public CategoryDto getCategory(Long id) {
+        // Define required variables
         List<Category> listChildren = new ArrayList<>();
+        // Find item
         Optional<Category> foundCategory = categoryRepository.findById(id);
-        if (foundCategory.isPresent() && (foundCategory.get().getParent() != null)) {
-            listChildren = categoryRepository.findByParentId(foundCategory.get().getParent().getId());
+        // if Item is existed
+        if (foundCategory.isPresent()) {
+            //load item's parent and child
+            //Category parent = categoryRepository.getById(foundCategory.get().getParent().getId());
+            listChildren = categoryRepository.findByParentId(id);
+            if (listChildren.isEmpty()) {
+                return new CategoryDto().loadFromEntity(foundCategory.get());
+            } else {
+                return new CategoryDto().loadFromEntityWithChildren(foundCategory.get(), listChildren);
+            }
+        } else {
+            return null;
         }
-        return (foundCategory.isPresent()) ? new CategoryDto(foundCategory.get(), listChildren) : null;
+
     }
 
     @Override
